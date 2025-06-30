@@ -1,10 +1,21 @@
 export default async function handler(req, res) {
+  // Handle CORS preflight (OPTIONS) requests
+  if (req.method === 'OPTIONS') {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    return res.status(200).end();
+  }
+
+  // Allow all origins for POST request
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   const userText = req.body.text;
-  const API_KEY = process.env.GROQ_API_KEY; // <-- must match your env var name
+  const API_KEY = process.env.GROQ_API_KEY;
 
   if (!API_KEY) {
     return res.status(500).json({ error: "API key not configured" });
@@ -57,7 +68,8 @@ Now moderate: """${userText}"""
       return res.status(200).json({ verdict: reply });
     }
 
-    return res.status(200).json({ verdict: "BLOCK" }); // fallback
+    // fallback to BLOCK if response unexpected
+    return res.status(200).json({ verdict: "BLOCK" });
 
   } catch (err) {
     console.error("Handler error:", err);
