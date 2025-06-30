@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -57,7 +56,7 @@ Reply ONLY with: ALLOW or BLOCK.
     if (!response.ok) {
       const errorBody = await response.text();
       console.error("OpenRouter API error:", response.status, errorBody);
-      return res.status(500).json({ error: "OpenRouter API error" });
+      return res.status(500).json({ error: `OpenRouter API error: ${errorBody}` });
     }
 
     const data = await response.json();
