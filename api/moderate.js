@@ -1,20 +1,23 @@
 export default async function handler(req, res) {
-  // CORS headers — allow any origin, POST & OPTIONS methods, and JSON content
+  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle preflight OPTIONS request quickly
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  if (req.method !== 'POST') {
+  if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
   }
 
   const userText = req.body.text;
-  const apiKey = "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";
+  console.log("📝 Received text:", userText);
+
+  if (!userText) {
+    return res.status(400).json({ error: "No text provided" });
+  }
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -53,8 +56,17 @@ Reply ONLY with: ALLOW or BLOCK.
       })
     });
 
+    console.log("🔄 OpenRouter response status:", response.status);
+
     const data = await response.json();
+    console.log("🧠 OpenRouter response JSON:", data);
+
     const reply = data.choices?.[0]?.message?.content?.trim();
+    console.log("🗣️ Parsed reply:", reply);
+
+    if (!reply) {
+      return res.status(500).json({ error: "No reply from moderation API" });
+    }
 
     return res.status(200).json({ verdict: reply });
 
