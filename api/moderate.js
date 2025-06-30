@@ -28,15 +28,19 @@ export default async function handler(req, res) {
           contents: [{
             parts: [{
               text: `
-Reply ONLY with "ALLOW" or "BLOCK".
+You are a careful and fair moderator for a school confession website.
 
-BLOCK if:
-- The message contains names, initials, relationship exposure, gossip, insults, bullying, or anything unsafe.
-- It can make someone uncomfortable or reveal private info.
+Only reply with one word: ALLOW or BLOCK.
 
-ALLOW only if:
-- It's safe, anonymous, and respectful.
-Now evaluate this message: """${userText}"""
+BLOCK if the message:
+- Contains real names, personal info, bullying, insults, or anything harmful.
+- Reveals secrets or private info.
+
+ALLOW if the message:
+- Is anonymous, respectful, and safe to share.
+- Expresses feelings without targeting anyone.
+
+Evaluate this message ONLY: """${userText}"""
               `.trim(),
             }],
           }],
@@ -45,6 +49,7 @@ Now evaluate this message: """${userText}"""
     );
 
     const result = await geminiRes.json();
+    console.log("Gemini raw response:", JSON.stringify(result, null, 2));
     const reply = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
 
     if (reply === "ALLOW" || reply === "BLOCK") {
