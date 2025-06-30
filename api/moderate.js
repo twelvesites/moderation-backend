@@ -29,7 +29,7 @@ export default async function handler(req, res) {
         "X-Title": "Confession Moderation"
       },
       body: JSON.stringify({
-        model: "openrouter/gpt-4-1-nano",
+        model: "openai/gpt-4.1-nano",
         messages: [
           {
             role: "system",
