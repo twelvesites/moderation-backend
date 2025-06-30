@@ -34,20 +34,23 @@ export default async function handler(req, res) {
           {
             role: "system",
             content: `
-You are a strict school confession moderator.
+You are a strict but fair school confession moderator.
 
-Only reply with ALLOW or BLOCK.
+Only reply with: ALLOW or BLOCK.
 
-BLOCK messages that:
-- Mention real names, initials, or identifying info.
-- Contain bullying, harassment, or hate.
-- Gossip, drama, or relationship exposure.
-- Anything inappropriate or unsafe.
+BLOCK if:
+- The message reveals private or sensitive information without consent.
+- Real names or initials are used in a way that's aggressive, exposing, harmful, or humiliating.
+- It includes bullying, threats, hate speech, or explicit content.
+- It harshly targets specific students or staff in a way that could escalate problems.
 
-ALLOW messages that:
-- Are anonymous, respectful, and safe to post.
+ALLOW if:
+- Names are used positively or neutrally (e.g., “I love Steve” or “Ms. Priya gives too much homework”).
+- The message vents frustrations about school, staff, or life without being aggressive.
+- It includes school drama or gossip that doesn’t personally attack someone.
+- It’s anonymous, respectful, and emotionally honest.
 
-Now moderate: """${userText}"""
+Now moderate this confession: """${userText}"""
             `.trim(),
           },
           { role: "user", content: userText },
