@@ -14,6 +14,7 @@ export default async function handler(req, res) {
   }
 
   const userText = req.body.text;
+  const apiKey = "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";
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -25,7 +26,7 @@ export default async function handler(req, res) {
         "X-Title": "Confession Moderation"
       },
       body: JSON.stringify({
-        model: "openai/gpt-4.1-nano",
+        model: "openrouter/gpt-4-1-nano",
         messages: [
           {
             role: "system",
