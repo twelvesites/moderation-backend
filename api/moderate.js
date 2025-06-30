@@ -27,6 +27,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "deepseek/deepseek-r1-0528",
+        max_tokens: 256,      
         messages: [
           {
             role: "system",
