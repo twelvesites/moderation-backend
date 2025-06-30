@@ -1,4 +1,7 @@
 export default async function handler(req, res) {
+  // ✅ Allow all origins (for now)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   if (req.method !== 'POST') {
     return res.status(405).send("Method Not Allowed");
   }
@@ -14,7 +17,8 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: `
+          parts: [{
+            text: `
 Reply ONLY with "ALLOW" or "BLOCK".
 
 BLOCK if:
@@ -24,7 +28,8 @@ BLOCK if:
 ALLOW only if:
 - It's safe, anonymous, and respectful.
 Now evaluate this message: """${userText}"""
-          `.trim() }]
+            `.trim()
+          }]
         }]
       })
     });
@@ -35,7 +40,7 @@ Now evaluate this message: """${userText}"""
     if (reply === "ALLOW" || reply === "BLOCK") {
       return res.status(200).json({ verdict: reply });
     } else {
-      return res.status(200).json({ verdict: "BLOCK" }); // default to BLOCK for safety
+      return res.status(200).json({ verdict: "BLOCK" }); // safer fallback
     }
 
   } catch (err) {
