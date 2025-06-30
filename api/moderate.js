@@ -1,18 +1,15 @@
 export default async function handler(req, res) {
-  // Allow all origins for now (change for production!)
-  res.setHeader("Access-Control-Allow-Origin", "*");
-
-  if (req.method === 'OPTIONS') {
-    // Preflight response for CORS
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    res.status(200).end();
-    return;
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
+
+  const userText = req.body.text;
+  const API_KEY = process.env.GROQ_API_KEY; // <-- must match your env var name
+
+  if (!API_KEY) {
+    return res.status(500).json({ error: "API key not configured" });
+  }
+
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -60,8 +57,7 @@ Now moderate: """${userText}"""
       return res.status(200).json({ verdict: reply });
     }
 
-    // Fallback safe default
-    return res.status(200).json({ verdict: "BLOCK" });
+    return res.status(200).json({ verdict: "BLOCK" }); // fallback
 
   } catch (err) {
     console.error("Handler error:", err);
