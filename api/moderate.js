@@ -1,26 +1,33 @@
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    return res.status(200).end();
+  }
 
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST, OPTIONS");
+    return res.status(405).send("Method Not Allowed");
+  }
+
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
   const userText = req.body.text;
-  console.log("Received text:", userText);
-  if (!userText) return res.status(400).json({ error: "No text provided" });
+  if (!userText) {
+    return res.status(400).json({ error: "No text provided" });
+  }
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": "Bearer sk-or-v1-a5f54968b486fa17e328d32de7bc227e5bbfc02c6916b4061d14e5a3f1513",
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": req.headers["referer"] || "https://twelve-ai.vercel.app",
-        "X-Title": "Confession Moderation"
       },
       body: JSON.stringify({
-        model: "openrouter/gpt-4-1-nano",
+        model: "deepseek/deepseek-r1-0528",
         messages: [
           {
             role: "system",
@@ -41,15 +48,19 @@ Reply ONLY with: ALLOW or BLOCK.
           },
           {
             role: "user",
-            content: userText
-          }
-        ]
+            content: userText,
+          },
+        ],
       }),
     });
 
-    console.log("OpenRouter status:", response.status);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("OpenRouter API error:", response.status, errorBody);
+      return res.status(500).json({ error: "OpenRouter API error" });
+    }
+
     const data = await response.json();
-    console.log("OpenRouter full response:", JSON.stringify(data, null, 2));
 
     if (!data.choices || data.choices.length === 0) {
       return res.status(500).json({ error: "No choices returned from OpenRouter" });
