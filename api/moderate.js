@@ -19,17 +19,17 @@ export default async function handler(req, res) {
 
   try {
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-guard-3-8b-8k",
-        messages: [
-          {
-            role: "system",
-            content: `
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${API_KEY}`,
+  },
+  body: JSON.stringify({
+    model: "llama-guard-3-8b-8k",
+    messages: [
+      {
+        role: "system",
+        content: `
 You are a strict school confession moderator.
 
 Only reply with ALLOW or BLOCK.
@@ -44,22 +44,21 @@ ALLOW messages that:
 - Are anonymous, respectful, and safe to post.
 
 Now moderate: """${userText}"""
-            `.trim()
-          },
-          {
-            role: "user",
-            content: userText
-          }
-        ]
-      })
-    });
+        `.trim()
+      },
+      {
+        role: "user",
+        content: userText
+      }
+    ]
+  }),
+});
 
-    const result = await groqRes.json();
-    const reply = result.choices?.[0]?.message?.content?.trim().toUpperCase();
+const data = await groqRes.json();
+const reply = data.choices?.[0]?.message?.content?.trim().toUpperCase();
 
-    return res.status(200).json({ verdict: (reply === "ALLOW" || reply === "BLOCK") ? reply : "BLOCK" });
-  } catch (err) {
-    console.error("❌ Groq error:", err);
-    return res.status(500).json({ error: "Groq moderation failed" });
-  }
+if (reply === "ALLOW" || reply === "BLOCK") {
+  return { verdict: reply };
+} else {
+  return { verdict: "BLOCK" }; // safer fallback
 }
