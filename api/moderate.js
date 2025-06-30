@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // Handle CORS preflight
+  // Allow all origins (CORS)
   if (req.method === 'OPTIONS') {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -8,57 +8,58 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Allow all origins for POST request
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  if (req.method !== 'POST') {
+  if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
   }
 
   const userText = req.body.text;
-  const API_KEY = process.env.GEMINI_API_KEY;
+  const API_KEY = process.env.GROQ_API_KEY;
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `
-You are a careful and fair moderator for a school confession website.
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-guard-3-8b-8k",
+        messages: [
+          {
+            role: "system",
+            content: `
+You are a strict school confession moderator.
 
-Only reply with one word: ALLOW or BLOCK.
+Only reply with ALLOW or BLOCK.
 
-BLOCK if the message:
-- Contains real names, personal info, bullying, insults, or anything harmful.
-- Reveals secrets or private info.
+BLOCK messages that:
+- Mention real names, initials, or identifying information.
+- Contain bullying, harassment, or hate.
+- Gossip, drama, or relationship exposure.
+- Anything inappropriate or unsafe.
 
-ALLOW if the message:
-- Is anonymous, respectful, and safe to share.
-- Expresses feelings without targeting anyone.
+ALLOW messages that:
+- Are anonymous, respectful, and safe to post.
 
-Evaluate this message ONLY: """${userText}"""
-              `.trim(),
-            }],
-          }],
-        }),
-      }
-    );
+Now moderate: """${userText}"""
+            `.trim()
+          },
+          {
+            role: "user",
+            content: userText
+          }
+        ]
+      })
+    });
 
-    const result = await geminiRes.json();
-    console.log("Gemini raw response:", JSON.stringify(result, null, 2));
-    const reply = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
+    const result = await groqRes.json();
+    const reply = result.choices?.[0]?.message?.content?.trim().toUpperCase();
 
-    if (reply === "ALLOW" || reply === "BLOCK") {
-      return res.status(200).json({ verdict: reply });
-    } else {
-      return res.status(200).json({ verdict: "BLOCK" }); // fallback safe
-    }
+    return res.status(200).json({ verdict: (reply === "ALLOW" || reply === "BLOCK") ? reply : "BLOCK" });
   } catch (err) {
-    console.error("❌ Gemini error:", err);
-    return res.status(500).json({ error: "Gemini moderation failed" });
+    console.error("❌ Groq error:", err);
+    return res.status(500).json({ error: "Groq moderation failed" });
   }
 }
