@@ -4,9 +4,10 @@ export default async function handler(req, res) {
   }
 
   const userText = req.body.text;
-  const API_KEY = process.env.API_KEY;
+  const API_KEY = process.env.GROQ_API_KEY;
 
   if (!API_KEY) {
+    console.error("API key not configured");
     return res.status(500).json({ error: "API key not configured" });
   }
 
@@ -57,7 +58,8 @@ Now moderate: """${userText}"""
       return res.status(200).json({ verdict: reply });
     }
 
-    return res.status(200).json({ verdict: "BLOCK" }); // fallback
+    // Fallback safe default
+    return res.status(200).json({ verdict: "BLOCK" });
 
   } catch (err) {
     console.error("Handler error:", err);
