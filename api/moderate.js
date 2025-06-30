@@ -1,41 +1,34 @@
 export default async function handler(req, res) {
-  // Allow all origins (CORS)
-  if (req.method === 'OPTIONS') {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    res.status(200).end();
-    return;
-  }
-
-  res.setHeader("Access-Control-Allow-Origin", "*");
-
-  if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   const userText = req.body.text;
-  const API_KEY = process.env.GROQ_API_KEY;
+  const API_KEY = process.env.API_KEY;
+
+  if (!API_KEY) {
+    return res.status(500).json({ error: "API key not configured" });
+  }
 
   try {
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${API_KEY}`,
-  },
-  body: JSON.stringify({
-    model: "llama-guard-3-8b-8k",
-    messages: [
-      {
-        role: "system",
-        content: `
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-guard-3-8b-8k",
+        messages: [
+          {
+            role: "system",
+            content: `
 You are a strict school confession moderator.
 
 Only reply with ALLOW or BLOCK.
 
 BLOCK messages that:
-- Mention real names, initials, or identifying information.
+- Mention real names, initials, or identifying info.
 - Contain bullying, harassment, or hate.
 - Gossip, drama, or relationship exposure.
 - Anything inappropriate or unsafe.
@@ -44,21 +37,30 @@ ALLOW messages that:
 - Are anonymous, respectful, and safe to post.
 
 Now moderate: """${userText}"""
-        `.trim()
-      },
-      {
-        role: "user",
-        content: userText
-      }
-    ]
-  }),
-});
+            `.trim(),
+          },
+          { role: "user", content: userText },
+        ],
+      }),
+    });
 
-const data = await groqRes.json();
-const reply = data.choices?.[0]?.message?.content?.trim().toUpperCase();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Groq API error:", errorText);
+      return res.status(500).json({ error: "Groq API error", details: errorText });
+    }
 
-if (reply === "ALLOW" || reply === "BLOCK") {
-  return { verdict: reply };
-} else {
-  return { verdict: "BLOCK" }; // safer fallback
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content?.trim().toUpperCase();
+
+    if (reply === "ALLOW" || reply === "BLOCK") {
+      return res.status(200).json({ verdict: reply });
+    }
+
+    return res.status(200).json({ verdict: "BLOCK" }); // fallback
+
+  } catch (err) {
+    console.error("Handler error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 }
