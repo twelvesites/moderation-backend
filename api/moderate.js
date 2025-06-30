@@ -1,23 +1,14 @@
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
   const userText = req.body.text;
-  console.log("📝 Received text:", userText);
-
-  if (!userText) {
-    return res.status(400).json({ error: "No text provided" });
-  }
+  console.log("Received text:", userText);
+  if (!userText) return res.status(400).json({ error: "No text provided" });
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -29,7 +20,7 @@ export default async function handler(req, res) {
         "X-Title": "Confession Moderation"
       },
       body: JSON.stringify({
-        model: "openai/gpt-4.1-nano",
+        model: "openrouter/gpt-4-1-nano",
         messages: [
           {
             role: "system",
@@ -53,25 +44,27 @@ Reply ONLY with: ALLOW or BLOCK.
             content: userText
           }
         ]
-      })
+      }),
     });
 
-    console.log("🔄 OpenRouter response status:", response.status);
-
+    console.log("OpenRouter status:", response.status);
     const data = await response.json();
-    console.log("🧠 OpenRouter response JSON:", data);
+    console.log("OpenRouter full response:", JSON.stringify(data, null, 2));
 
-    const reply = data.choices?.[0]?.message?.content?.trim();
-    console.log("🗣️ Parsed reply:", reply);
+    if (!data.choices || data.choices.length === 0) {
+      return res.status(500).json({ error: "No choices returned from OpenRouter" });
+    }
+
+    const reply = data.choices[0]?.message?.content?.trim();
 
     if (!reply) {
-      return res.status(500).json({ error: "No reply from moderation API" });
+      return res.status(500).json({ error: "No reply content in choices" });
     }
 
     return res.status(200).json({ verdict: reply });
 
   } catch (error) {
-    console.error("🛑 Moderation failed:", error);
+    console.error("Moderation error:", error);
     return res.status(500).json({ error: "Moderation error" });
   }
 }
