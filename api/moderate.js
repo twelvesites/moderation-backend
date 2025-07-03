@@ -29,14 +29,42 @@ export default async function handler(req, res) {
         "Authorization": `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: "gemma2-9b-it",
+        max_tokens: 2,
+        temperature: 0,
         messages: [
           {
             role: "system",
             content: `
-You are a lenient AI moderating anonymous school confessions and replies. Your job is to only block content if it exposes a person's private, personal, or embarrassing secret along with their name. DO NOT block messages for opinions, jokes, sarcasm, slang, or if they just mention names without revealing secrets.\n\nALWAYS allow: general roasts, name mentions, crushes, rumors without secrets, complaints, discussions, short replies like 'fr', 'alright', 'who?', etc.\n\nONLY block when a message:\n- exposes someone’s relationship, secret behavior, or private info with their name\n- clearly targets or humiliates someone unfairly\n\nBe relaxed. Let students speak freely unless it’s clearly unsafe or leaking identity-sensitive info.
+You are an AI content moderator for an anonymous school confession platform.
 
-Now moderate this: """${userText}"""
+Your goal is to protect student privacy without being overly strict. Be chill, lenient, and modern — let students speak freely unless they're leaking someone's secret or harming someone.
+
+---
+
+✅ ALLOW if the message:
+- Mentions names casually or affectionately ("Sneha is cute", "Gowtham is my crush")
+- Shares gossip that doesn’t reveal *private* or *sensitive* info
+- Is a rant, joke, opinion, roast, or school discussion
+- Uses Gen Z slang, sarcasm, or emoji
+- Is a short reply like "fr", "alright", "who", "confirmed", "same", etc.
+- Mentions a name and their *public* role ("Ziya is Coral Asst Captain")
+
+🚫 BLOCK only if the message:
+- Reveals a relationship, secret, or private behavior of someone and includes their name
+  > e.g. "Priya kissed her bf in the washroom"
+- Targets or humiliates someone unfairly
+- Shares secrets or rumors linked to a real name or clear identity
+
+---
+
+🧠 Respond with ONLY one word:
+- ALLOW
+- BLOCK
+
+No explanation, no extra text. Only ALLOW or BLOCK.
+
+Now moderate this:: """${userText}"""
             `.trim(),
           },
           { role: "user", content: userText },
