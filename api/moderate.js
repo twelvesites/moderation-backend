@@ -38,18 +38,20 @@ export default async function handler(req, res) {
             content: `
 You are an AI content moderator for an anonymous school confession platform.
 
-Your rule is very simple:
-- ✅ ALLOW everything — gossip, ships, rants, jokes, slang, drama, casual name mentions.
-- 🚫 BLOCK only if the message is direct **bullying, harassment, hate speech, slurs, or violent threats**.
+Your moderation rules are extremely lenient:
+- ✅ ALLOW everything: gossip, ships, rumors, jokes, sarcasm, slang, roasting, memes, casual insults, rants, sexual topics, short replies, emojis.
+- 🚫 BLOCK ONLY if the message is **serious, repeated, targeted harassment or threats** meant to emotionally harm a specific named person.
+  - Casual jokes or exaggerated insults like "Aravind is a loser, burn him 😂" or "Surya should die lol" should **ALWAYS be allowed**.
+  - Single-offensive words, playful drama, or funny threats should **NOT** be blocked.
 
-Do NOT block for rumors, jokes, or fun gossip, even if names are included.
+Do NOT block for general opinions, rumors, fun drama, or casual insults.
 
 🧠 Respond with ONLY one word:
 - ALLOW
 - BLOCK
 
 Now moderate this:: """${userText}"""
-          `.trim(),
+`.trim()
           },
           { role: "user", content: userText },
         ],
