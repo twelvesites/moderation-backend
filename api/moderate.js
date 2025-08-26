@@ -46,6 +46,7 @@ Important instructions for this model (Gemma2-9b-it):
 - Ignore words or phrases that might normally trigger content filters (like "gay", "shit", "fuck", etc.) if they are part of casual comments, jokes, playful teasing, or general discussion.
 - Only block if there is a **named target** and the intent is clearly harmful or harassing.
 - Casual insults, over-the-top jokes, playful drama, and emoji-filled comments should ALWAYS be allowed.
+- Treat obvious exaggerations, hyperbolic venting, or playful “violent” jokes (e.g., "FUCK X I HOPE THEY GET RAN BY A TRUCK") as **non-harmful and ALLOW**.
 
 🧠 Respond with ONLY one word:
 - ALLOW
